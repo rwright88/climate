@@ -23,13 +23,9 @@ def read_stations(path):
     return df
 
 
-def read_normals(path):
-    df = pd.read_csv(path)
-    return df
-
-
-STATIONS = read_stations("../data/climate/stations/stations.csv")
-NORM = read_normals("../data/climate/normals/normals.csv")
+STATIONS = read_stations("out/stations.csv")
+NORM_MLY = pd.read_csv("out/normals-monthly.csv")
+NORM_DLY = pd.read_csv("out/normals-daily.csv")
 
 NAMES = [
     {"label": name, "value": id1} for name, id1 in zip(STATIONS["name"], STATIONS["id"])
@@ -51,7 +47,7 @@ STATIONS_COLS = [
     {"id": "wmo_id", "name": "WMO ID"},
 ]
 
-NORM_COLS = [
+NORM_MLY_COLS = [
     {"id": "month", "name": "Month", "type": "numeric"},
     {
         "id": "prcp",
@@ -62,6 +58,41 @@ NORM_COLS = [
     {
         "id": "snow",
         "name": "Snowfall",
+        "type": "numeric",
+        "format": Format(precision=1, scheme=Scheme.fixed),
+    },
+    {
+        "id": "tavg",
+        "name": "Temp avg",
+        "type": "numeric",
+        "format": Format(precision=1, scheme=Scheme.fixed),
+    },
+    {
+        "id": "tmax",
+        "name": "Temp max",
+        "type": "numeric",
+        "format": Format(precision=1, scheme=Scheme.fixed),
+    },
+    {
+        "id": "tmin",
+        "name": "Temp min",
+        "type": "numeric",
+        "format": Format(precision=1, scheme=Scheme.fixed),
+    },
+]
+
+NORM_DLY_COLS = [
+    {"id": "month", "name": "Month", "type": "numeric"},
+    {"id": "day", "name": "Day", "type": "numeric"},
+    {
+        "id": "prcp",
+        "name": "Precip chance",
+        "type": "numeric",
+        "format": Format(precision=1, scheme=Scheme.fixed),
+    },
+    {
+        "id": "snow",
+        "name": "Snow chance",
         "type": "numeric",
         "format": Format(precision=1, scheme=Scheme.fixed),
     },
@@ -145,19 +176,33 @@ app.layout = html.Div(
             style_header=STYLE_HEADER,
             style_cell=STYLE_CELL,
         ),
-        html.H2("Monthly normals"),
+        html.H2("Monthly averages"),
         html.P(
             "Climate monthly averages for 1981-2010. Precipitation and snowfall in"
             " inches. Temperature in Fahrenheit."
         ),
         dash_table.DataTable(
-            id="table-normals",
-            columns=NORM_COLS,
+            id="table-normals-monthly",
+            columns=NORM_MLY_COLS,
             style_header=STYLE_HEADER,
             style_cell=STYLE_CELL,
         ),
-        html.H2("Daily normals"),
-        html.P("TODO"),
+        html.H2("Daily averages"),
+        html.P(
+            "Climate daily averages for 1981-2010."
+            " Precipitation chance is the probability of >= 0.1 inches of rain,"
+            " and snow chance is the probability of >= 0.1 inches of snow."
+            " Temperature in Fahrenheit."
+        ),
+        dash_table.DataTable(
+            id="table-normals-daily",
+            columns=NORM_DLY_COLS,
+            filter_action="native",
+            page_size=10,
+            sort_action="native",
+            style_header=STYLE_HEADER,
+            style_cell=STYLE_CELL,
+        ),
         html.H2("Historical daily data"),
         html.P(
             "Historical climate data by day. Precipitation, snowfall, and snowdepth in"
@@ -187,9 +232,16 @@ def update_stations(id1):
     return STATIONS[STATIONS["id"] == id1].to_dict("records")
 
 
-@app.callback(Output("table-normals", "data"), [Input("id1", "value")])
-def update_normals(id1):
-    df = NORM[NORM["id"] == id1]
+@app.callback(Output("table-normals-monthly", "data"), [Input("id1", "value")])
+def update_normals_monthly(id1):
+    df = NORM_MLY[NORM_MLY["id"] == id1]
+    df = df.drop("id", axis=1)
+    return df.to_dict("records")
+
+
+@app.callback(Output("table-normals-daily", "data"), [Input("id1", "value")])
+def update_normals_daily(id1):
+    df = NORM_DLY[NORM_DLY["id"] == id1]
     df = df.drop("id", axis=1)
     return df.to_dict("records")
 

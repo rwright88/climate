@@ -17,27 +17,33 @@ import pandas as pd
 from climate.utils import profile
 import climate
 
-OUT_NORMALS = "../data/climate/normals/normals.csv"
-OUT_STATIONS = "../data/climate/stations/stations.csv"
+OUT_STATIONS = "out/stations.csv"
+OUT_NORMALS_MONTHLY = "out/normals-monthly.csv"
+OUT_NORMALS_DAILY = "out/normals-daily.csv"
 
 
 def main():
-    # First, get static normals data if we don't already have it
-    # For now, also assume that stations metadata is static
-
-    if not os.path.isdir(os.path.dirname(OUT_NORMALS)):
-        os.makedirs(os.path.dirname(OUT_NORMALS), exist_ok=True)
-
-    if not os.path.exists(OUT_NORMALS):
-        normals = climate.norm_get_mly()
-        normals.to_csv(OUT_NORMALS, index=False)
-
-    if not os.path.isdir(os.path.dirname(OUT_STATIONS)):
-        os.makedirs(os.path.dirname(OUT_STATIONS), exist_ok=True)
+    for out in [OUT_STATIONS, OUT_NORMALS_MONTHLY, OUT_NORMALS_DAILY]:
+        if not os.path.isdir(os.path.dirname(out)):
+            os.makedirs(os.path.dirname(out), exist_ok=True)
 
     if not os.path.exists(OUT_STATIONS):
-        stations = climate.ghcn_read_stations_file()
-        stations.to_csv(OUT_STATIONS, index=False)
+        climate.ghcn_read_stations_file().to_csv(OUT_STATIONS, index=False)
+
+    if not os.path.exists(OUT_NORMALS_MONTHLY):
+        climate.norm_get_mly().to_csv(OUT_NORMALS_MONTHLY, index=False)
+
+    if not os.path.exists(OUT_NORMALS_DAILY):
+        climate.norm_get_dly().to_csv(OUT_NORMALS_DAILY, index=False)
+
+    # TODO: Temp
+    stations = climate.ghcn_read_stations_file()
+    df = climate.ghcn_clean_dly_data(climate.ghcn_read_dly_file(id1="USW00013739"))
+    df["year"] = df["date"].dt.year
+    df["month"] = df["date"].dt.month
+    agg = {"prcp": "sum", "snow": "sum", "snwd": "mean", "tmax": "mean", "tmin": "mean"}
+    df.groupby(["year"]).agg(agg).reset_index()
+    df.groupby(["year", "month"]).agg(agg).reset_index()
 
 
 if __name__ == "__main__":

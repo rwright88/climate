@@ -1,4 +1,4 @@
-"""Climate normals data"""
+"""Climate normals monthly data"""
 
 import re
 
