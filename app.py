@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+# TODO: Share GHCN data between functions for monthly and yearly data
+# TODO: Display something like "No data available" if nrows == 0
+# TODO: Display "Loading" instead of previous table
 
 from datetime import date
 
@@ -150,6 +153,42 @@ GHCN_COLS = [
     },
 ]
 
+GHCN_MLY_COLS = [
+    {"id": "year", "name": "Year"},
+    {"id": "month", "name": "Month"},
+    {
+        "id": "prcp",
+        "name": "Precipitation",
+        "type": "numeric",
+        "format": Format(precision=2, scheme=Scheme.fixed),
+    },
+    {
+        "id": "snow",
+        "name": "Snowfall",
+        "type": "numeric",
+        "format": Format(precision=1, scheme=Scheme.fixed),
+    },
+    {
+        "id": "snwd",
+        "name": "Snow depth",
+        "type": "numeric",
+        "format": Format(precision=1, scheme=Scheme.fixed),
+    },
+    {
+        "id": "tmax",
+        "name": "Temp max",
+        "type": "numeric",
+        "format": Format(precision=1, scheme=Scheme.fixed),
+    },
+    {
+        "id": "tmin",
+        "name": "Temp min",
+        "type": "numeric",
+        "format": Format(precision=1, scheme=Scheme.fixed),
+    },
+]
+
+
 app = dash.Dash(
     __name__,
     external_stylesheets=["https://codepen.io/chriddyp/pen/bWLwgP.css"],
@@ -210,7 +249,8 @@ app.layout = html.Div(
         ),
         html.P(
             "Note: This table can take 5+ seconds to update because it downloads data"
-            " from an outside source."
+            " from an outside source.",
+            style={"background-color": "yellow"},
         ),
         dash_table.DataTable(
             id="table-ghcn",
@@ -221,8 +261,28 @@ app.layout = html.Div(
             style_header=STYLE_HEADER,
             style_cell=STYLE_CELL,
         ),
+        # html.H2("Historical monthly data"),
+        # html.P(
+        #     "Historical climate data by month. Precipitation, snowfall, and snowdepth in"
+        #     " inches. Temperature in Fahrenheit."
+        # ),
+        # html.P(
+        #     "Note: This table can take 5+ seconds to update because it downloads data"
+        #     " from an outside source."
+        # ),
+        # dash_table.DataTable(
+        #     id="table-ghcn-monthly",
+        #     columns=GHCN_MLY_COLS,
+        #     filter_action="native",
+        #     page_size=12,
+        #     sort_action="native",
+        #     style_header=STYLE_HEADER,
+        #     style_cell=STYLE_CELL,
+        # ),
         html.H2("Data source"),
-        html.P("https://www.ncdc.noaa.gov/data-access/land-based-station-data/land-based-datasets")
+        html.P(
+            "https://www.ncdc.noaa.gov/data-access/land-based-station-data/land-based-datasets"
+        ),
     ],
 )
 
@@ -256,6 +316,20 @@ def get_ghcn(id1):
     df = df.sort_values("date", ascending=False)
     df["date"] = df["date"].astype(str)
     return df.to_dict("records")
+
+
+# @app.callback(Output("table-ghcn-monthly", "data"), [Input("id1", "value")])
+# def get_ghcn_monthly(id1):
+#     if id1 is None:
+#         return pd.DataFrame().to_dict("records")
+#     df = climate.ghcn_read_dly_file(id1=id1)
+#     df = climate.ghcn_clean_dly_data(df)
+#     df["year"] = df["date"].dt.year
+#     df["month"] = df["date"].dt.month
+#     agg = {"prcp": "sum", "snow": "sum", "snwd": "mean", "tmax": "mean", "tmin": "mean"}
+#     df = df.groupby(["year", "month"]).agg(agg).reset_index()
+#     df = df.sort_values(["year", "month"], ascending=[False, False])
+#     return df.to_dict("records")
 
 
 if __name__ == "__main__":

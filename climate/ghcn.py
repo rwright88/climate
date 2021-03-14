@@ -90,9 +90,11 @@ def ghcn_clean_dly_data(df):
     ).reset_index()
     df.columns = [x.lower() for x in df.columns]
     for col in ["prcp"]:
-        df[col] = df[col].round(2)
+        if col in df.columns:
+            df[col] = df[col].round(2)
     for col in ["snow", "snwd", "tmax", "tmin"]:
-        df[col] = df[col].round(1)
+        if col in df.columns:
+            df[col] = df[col].round(1)
     return df
 
 

@@ -36,14 +36,8 @@ def main():
     if not os.path.exists(OUT_NORMALS_DAILY):
         climate.norm_get_dly().to_csv(OUT_NORMALS_DAILY, index=False)
 
-    # TODO: Temp
-    stations = climate.ghcn_read_stations_file()
-    df = climate.ghcn_clean_dly_data(climate.ghcn_read_dly_file(id1="USW00013739"))
-    df["year"] = df["date"].dt.year
-    df["month"] = df["date"].dt.month
-    agg = {"prcp": "sum", "snow": "sum", "snwd": "mean", "tmax": "mean", "tmin": "mean"}
-    df.groupby(["year"]).agg(agg).reset_index()
-    df.groupby(["year", "month"]).agg(agg).reset_index()
+    # TODO: test
+    profile('climate.ghcn_clean_dly_data(climate.ghcn_read_dly_file(id1="USW00014711"))', n=50)
 
 
 if __name__ == "__main__":
