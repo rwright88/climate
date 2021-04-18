@@ -37,7 +37,10 @@ def main():
         climate.norm_get_dly().to_csv(OUT_NORMALS_DAILY, index=False)
 
     # TODO: test
-    profile('climate.ghcn_clean_dly_data(climate.ghcn_read_dly_file(id1="USW00014711"))', n=50)
+    profile('df = climate.ghcn_read_dly_file(id1="USW00014711")')
+    profile('df = climate.ghcn_clean_dly_data(df)')
+    print(climate.ghcn_calc_summary(df, freq="yearly"))
+    print(climate.ghcn_calc_summary(df, freq="monthly"))
 
 
 if __name__ == "__main__":

@@ -1,3 +1,4 @@
+from climate.ghcn import ghcn_calc_summary
 from climate.ghcn import ghcn_clean_dly_data
 from climate.ghcn import ghcn_read_dly_file
 from climate.ghcn import ghcn_read_stations_file

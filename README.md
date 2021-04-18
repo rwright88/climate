@@ -1,15 +1,16 @@
 # Climate
 
-Climate and weather data and app.
+Climate data and app.
 
 ## Goals
 
 - Station meta data
 - Monthly normals
 - Daily normals
-- Historical monthly/yearly data?
+- Historical yearly data
+- Historical monthly data
 - Historical daily data
 
-## Data sources
+## Data source
 
 - https://www.ncdc.noaa.gov/data-access/land-based-station-data/land-based-datasets

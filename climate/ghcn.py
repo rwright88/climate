@@ -108,3 +108,33 @@ def ghcn_clean_values(x, element):
     x[element == "TMIN"] = x[element == "TMIN"] * 0.18 + 32
     return x
 
+
+def ghcn_calc_summary(df, freq, na_threshold=0.1):
+    """Get monthly or yearly averages from GHCN cleaned data"""
+    if freq == "yearly":
+        by = ["id", "year"]
+        min_count = np.ceil(365 * (1 - na_threshold))
+    elif freq == "monthly":
+        df["month"] = df["date"].dt.month
+        by = ["id", "year", "month"]
+        min_count = np.ceil(28 * (1 - na_threshold))
+    else:
+        raise ValueError("freq must be yearly or monthly")
+    df["year"] = df["date"].dt.year
+    agg = {
+        "prcp": ["sum", "count"],
+        "snow": ["sum", "count"],
+        "snwd": ["mean", "count"],
+        "tmax": ["mean", "count"],
+        "tmin": ["mean", "count"],
+    }
+    out = df.groupby(by).agg(agg).reset_index()
+    out.columns = by + [x + "_" + y for x in agg.keys() for y in agg[x]]
+    for k, v in agg.items():
+        stats = out[k + "_" + v[0]].copy()
+        count = out[k + "_" + v[1]]
+        bad = count < min_count
+        stats[bad] = np.nan
+        out[k] = stats
+    out = out[by + list(agg.keys())]
+    return out
