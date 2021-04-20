@@ -50,41 +50,6 @@ STATIONS_COLS = [
     {"id": "wmo_id", "name": "WMO ID"},
 ]
 
-GHCN_MONTHLY_COLS = [
-    {"id": "year", "name": "Year"},
-    {"id": "month", "name": "Month"},
-    {
-        "id": "prcp",
-        "name": "Precipitation",
-        "type": "numeric",
-        "format": Format(precision=2, scheme=Scheme.fixed),
-    },
-    {
-        "id": "snow",
-        "name": "Snowfall",
-        "type": "numeric",
-        "format": Format(precision=1, scheme=Scheme.fixed),
-    },
-    {
-        "id": "snwd",
-        "name": "Snow depth",
-        "type": "numeric",
-        "format": Format(precision=1, scheme=Scheme.fixed),
-    },
-    {
-        "id": "tmax",
-        "name": "Temp max",
-        "type": "numeric",
-        "format": Format(precision=1, scheme=Scheme.fixed),
-    },
-    {
-        "id": "tmin",
-        "name": "Temp min",
-        "type": "numeric",
-        "format": Format(precision=1, scheme=Scheme.fixed),
-    },
-]
-
 GHCN_DAILY_COLS = [
     {"id": "date", "name": "Date"},
     {
@@ -158,20 +123,16 @@ def plot_monthly(ys, id1, title):
     """Plot normals monthly"""
     df = NORM_MONTHLY[NORM_MONTHLY["id"] == id1]
     x1 = df["month"]
-    y_min = []
-    y_max = []
     fig = go.Figure()
     for y in ys:
-        y_max1 = df[y].max() * 1.05
-        y_min.append(0 - y_max1 / 1.05 * 0.05)
-        y_max.append(y_max1)
         fig.add_trace(go.Scatter(x=x1, y=df[y], connectgaps=True))
-    y_min = min(y_min)
-    y_max = max(y_max)
     layout = get_layout_plot()
     layout["hovermode"] = "x"
     layout["title"]["text"] = title
-    # layout["yaxis"]["range"] = [y_min, y_max]
+    if ("prcp" in ys) or ("snow" in ys):
+        y_max = np.nanmax(df[ys].to_numpy()) * 1.05
+        y_min = 0 - y_max / 1.05 * 0.05
+        layout["yaxis"]["range"] = [y_min, y_max]
     fig.update_layout(layout)
     return fig
 
@@ -180,20 +141,16 @@ def plot_daily(ys, id1, title):
     """Plot normals daily"""
     df = NORM_DAILY[NORM_DAILY["id"] == id1]
     x1 = np.arange(df.shape[0])
-    y_min = []
-    y_max = []
     fig = go.Figure()
     for y in ys:
-        y_max1 = df[y].max() * 1.05
-        y_min.append(0 - y_max1 / 1.05 * 0.05)
-        y_max.append(y_max1)
         fig.add_trace(go.Scatter(x=x1, y=df[y], connectgaps=True))
-    y_min = min(y_min)
-    y_max = max(y_max)
     layout = get_layout_plot()
     layout["hovermode"] = "x"
     layout["title"]["text"] = title
-    # layout["yaxis"]["range"] = [y_min, y_max]
+    if ("prcp" in ys) or ("snow" in ys):
+        y_max = np.nanmax(df[ys].to_numpy()) * 1.05
+        y_min = 0 - y_max / 1.05 * 0.05
+        layout["yaxis"]["range"] = [y_min, y_max]
     fig.update_layout(layout)
     return fig
 
@@ -201,20 +158,16 @@ def plot_daily(ys, id1, title):
 def plot_historical_yearly(df, ys, title):
     """Plot historical yearly"""
     x1 = df["year"]
-    y_min = []
-    y_max = []
     marker = {"color": "#1f77b4", "opacity": 0.8}
     fig = go.Figure()
     for y in ys:
-        y_max1 = df[y].max() * 1.05
-        y_min.append(0 - y_max1 / 1.05 * 0.05)
-        y_max.append(y_max1)
         fig.add_trace(go.Scatter(x=x1, y=df[y], mode="markers", marker=marker))
-    y_min = min(y_min)
-    y_max = max(y_max)
     layout = get_layout_plot()
     layout["title"]["text"] = title
-    # layout["yaxis"]["range"] = [y_min, y_max]
+    if ("prcp" in ys) or ("snow" in ys):
+        y_max = np.nanmax(df[ys].to_numpy()) * 1.05
+        y_min = 0 - y_max / 1.05 * 0.05
+        layout["yaxis"]["range"] = [y_min, y_max]
     fig.update_layout(layout)
     return fig
 
@@ -234,7 +187,7 @@ app.layout = html.Div(
         dcc.Dropdown(
             id="id1",
             options=NAMES,
-            # value=INITIAL,
+            value=INITIAL,
             placeholder="Select a station",
             style={"margin-top": "5px"},
         ),
@@ -278,7 +231,7 @@ app.layout = html.Div(
         ),
         dash_table.DataTable(
             id="table-ghcn-monthly",
-            columns=GHCN_MONTHLY_COLS,
+            columns=GHCN_DAILY_COLS,
             filter_action="native",
             page_size=12,
             sort_action="native",
@@ -420,6 +373,9 @@ def plot_historical_yearly_snow(data):
 )
 def table_ghcn_monthly(data):
     df = pd.read_json(data, orient="split")
+    dates = {"year": df["year"], "month": df["month"], "day": 1}
+    df["date"] = pd.to_datetime(dates).dt.strftime("%Y-%m-%d")
+    df = df.sort_values("date", ascending=False)
     return df.to_dict("records")
 
 
@@ -429,8 +385,8 @@ def table_ghcn_monthly(data):
 )
 def table_ghcn_daily(data):
     df = pd.read_json(data, orient="split")
+    df["date"] = pd.to_datetime(df["date"]).dt.strftime("%Y-%m-%d")
     df = df.sort_values("date", ascending=False)
-    df["date"] = df["date"].astype(str)
     return df.to_dict("records")
 
 
