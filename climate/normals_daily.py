@@ -109,6 +109,6 @@ def remove_invalid_dates(df):
         | ((df["month"] == 4) & (df["day"] == 31))
         | ((df["month"] == 6) & (df["day"] == 31))
         | ((df["month"] == 9) & (df["day"] == 31))
-        | ((df["month"] == 1) & (df["day"] == 31))
+        | ((df["month"] == 11) & (df["day"] == 31))
     )
     return df[~bad]
