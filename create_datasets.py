@@ -1,44 +1,30 @@
-"""Create or get climate datasets
-
-Types of datasets:
-
-- Station meta data
-- Monthly normals
-- Daily normals
-- Historical monthly/yearly data?
-- Historical daily data
-"""
+"""Create climate datasets"""
 
 import os
 
 import numpy as np
 import pandas as pd
 
-from climate.utils import profile
 import climate
 
-OUT_STATIONS = "out/stations.csv"
-OUT_NORMALS_MONTHLY = "out/normals-monthly.csv"
-OUT_NORMALS_DAILY = "out/normals-daily.csv"
+OUT_DIR = "out"
 
 
 def main():
-    for out in [OUT_STATIONS, OUT_NORMALS_MONTHLY, OUT_NORMALS_DAILY]:
-        if not os.path.isdir(os.path.dirname(out)):
-            os.makedirs(os.path.dirname(out), exist_ok=True)
+    if not os.path.exists(OUT_DIR):
+        os.makedirs(OUT_DIR, exist_ok=True)
 
-    if not os.path.exists(OUT_STATIONS):
-        climate.ghcn_read_stations_file().to_csv(OUT_STATIONS, index=False)
+    stations = climate.ghcn_read_stations_file()
+    normals_monthly = climate.norm_get_mly()
+    normals_daily = climate.norm_get_dly()
 
-    if not os.path.exists(OUT_NORMALS_MONTHLY):
-        climate.norm_get_mly().to_csv(OUT_NORMALS_MONTHLY, index=False)
+    stations.to_csv(os.path.join(OUT_DIR, "stations.csv"), index=False)
+    normals_monthly.to_csv(os.path.join(OUT_DIR, "normals-monthly.csv"), index=False)
+    normals_daily.to_csv(os.path.join(OUT_DIR, "normals-daily.csv"), index=False)
 
-    if not os.path.exists(OUT_NORMALS_DAILY):
-        climate.norm_get_dly().to_csv(OUT_NORMALS_DAILY, index=False)
-
-    # TODO: test
-    profile('df = climate.ghcn_read_dly_file(id1="USW00014711")')
-    profile('df = climate.ghcn_clean_dly_data(df)')
+    df = climate.ghcn_read_dly_file(id1="USW00094728")
+    df = climate.ghcn_clean_dly_data(df)
+    print(df)
     print(climate.ghcn_calc_summary(df, freq="yearly"))
     print(climate.ghcn_calc_summary(df, freq="monthly"))
 

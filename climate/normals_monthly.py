@@ -13,10 +13,12 @@ def norm_get_mly():
     tavg = norm_get_mly_tavg()
     tmax = norm_get_mly_tmax()
     tmin = norm_get_mly_tmin()
-    df = pd.merge(prcp, snow, how="outer", on=["id", "month"])
-    df = pd.merge(df, tavg, how="outer", on=["id", "month"])
-    df = pd.merge(df, tmax, how="outer", on=["id", "month"])
-    df = pd.merge(df, tmin, how="outer", on=["id", "month"])
+    by = ["id", "month"]
+    df = pd.merge(prcp, snow, how="outer", on=by)
+    df = pd.merge(df, tavg, how="outer", on=by)
+    df = pd.merge(df, tmax, how="outer", on=by)
+    df = pd.merge(df, tmin, how="outer", on=by)
+    df = df.sort_values(by)
     return df
 
 
@@ -25,7 +27,7 @@ def norm_get_mly_prcp():
     df = norm_read_mly_file(path)
     df = pd.melt(df, id_vars=["id"])
     df.columns = ["id", "month", "prcp"]
-    df["month"] = fix_month(df["month"])
+    df["month"] = df["month"].astype(int)
     df["prcp"] = df["prcp"] / 100
     return df
 
@@ -35,7 +37,7 @@ def norm_get_mly_snow():
     df = norm_read_mly_file(path)
     df = pd.melt(df, id_vars=["id"])
     df.columns = ["id", "month", "snow"]
-    df["month"] = fix_month(df["month"])
+    df["month"] = df["month"].astype(int)
     df["snow"] = df["snow"] / 10
     return df
 
@@ -45,7 +47,7 @@ def norm_get_mly_tavg():
     df = norm_read_mly_file(path)
     df = pd.melt(df, id_vars=["id"])
     df.columns = ["id", "month", "tavg"]
-    df["month"] = fix_month(df["month"])
+    df["month"] = df["month"].astype(int)
     df["tavg"] = df["tavg"] / 10
     return df
 
@@ -55,7 +57,7 @@ def norm_get_mly_tmax():
     df = norm_read_mly_file(path)
     df = pd.melt(df, id_vars=["id"])
     df.columns = ["id", "month", "tmax"]
-    df["month"] = fix_month(df["month"])
+    df["month"] = df["month"].astype(int)
     df["tmax"] = df["tmax"] / 10
     return df
 
@@ -65,19 +67,15 @@ def norm_get_mly_tmin():
     df = norm_read_mly_file(path)
     df = pd.melt(df, id_vars=["id"])
     df.columns = ["id", "month", "tmin"]
-    df["month"] = fix_month(df["month"])
+    df["month"] = df["month"].astype(int)
     df["tmin"] = df["tmin"] / 10
     return df
-
-
-def fix_month(x):
-    return pd.to_numeric([re.sub("month", "", e) for e in x])
 
 
 def norm_read_mly_file(path):
     """Read a normals monthly file"""
     spec1 = {"id": [(0, 11), str]}
-    spec2 = {"month" + str(i): [(11 + i * 7, 16 + i * 7), float] for i in range(1, 13)}
+    spec2 = {i: [(11 + i * 7, 16 + i * 7), float] for i in range(1, 13)}
     spec = {**spec1, **spec2}
     names = spec.keys()
     values = spec.values()

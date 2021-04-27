@@ -1,8 +1,8 @@
 # Climate
 
-Climate data and app.
+Get climate data from [NOAA](https://www.ncdc.noaa.gov/data-access/land-based-station-data/land-based-datasets).
 
-## Goals
+## Data
 
 - Station meta data
 - Monthly normals

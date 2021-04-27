@@ -18,6 +18,7 @@ def norm_get_dly():
     df = pd.merge(df, tavg, how="outer", on=by)
     df = pd.merge(df, tmax, how="outer", on=by)
     df = pd.merge(df, tmin, how="outer", on=by)
+    df = remove_invalid_dates(df)
     df = df.sort_values(by)
     return df
 
@@ -27,7 +28,8 @@ def norm_get_dly_prcp():
     df = norm_read_dly_file(path)
     df = pd.melt(df, id_vars=["id", "month"])
     df.columns = ["id", "month", "day", "prcp"]
-    df["day"] = fix_day(df["day"])
+    df["month"] = df["month"].astype(int)
+    df["day"] = df["day"].astype(int)
     df["prcp"] = df["prcp"] / 10
     return df
 
@@ -37,7 +39,8 @@ def norm_get_dly_snow():
     df = norm_read_dly_file(path)
     df = pd.melt(df, id_vars=["id", "month"])
     df.columns = ["id", "month", "day", "snow"]
-    df["day"] = fix_day(df["day"])
+    df["month"] = df["month"].astype(int)
+    df["day"] = df["day"].astype(int)
     df["snow"] = df["snow"] / 10
     return df
 
@@ -47,7 +50,8 @@ def norm_get_dly_tavg():
     df = norm_read_dly_file(path)
     df = pd.melt(df, id_vars=["id", "month"])
     df.columns = ["id", "month", "day", "tavg"]
-    df["day"] = fix_day(df["day"])
+    df["month"] = df["month"].astype(int)
+    df["day"] = df["day"].astype(int)
     df["tavg"] = df["tavg"] / 10
     return df
 
@@ -57,7 +61,8 @@ def norm_get_dly_tmax():
     df = norm_read_dly_file(path)
     df = pd.melt(df, id_vars=["id", "month"])
     df.columns = ["id", "month", "day", "tmax"]
-    df["day"] = fix_day(df["day"])
+    df["month"] = df["month"].astype(int)
+    df["day"] = df["day"].astype(int)
     df["tmax"] = df["tmax"] / 10
     return df
 
@@ -67,19 +72,16 @@ def norm_get_dly_tmin():
     df = norm_read_dly_file(path)
     df = pd.melt(df, id_vars=["id", "month"])
     df.columns = ["id", "month", "day", "tmin"]
-    df["day"] = fix_day(df["day"])
+    df["month"] = df["month"].astype(int)
+    df["day"] = df["day"].astype(int)
     df["tmin"] = df["tmin"] / 10
     return df
-
-
-def fix_day(x):
-    return pd.to_numeric([re.sub("day", "", e) for e in x])
 
 
 def norm_read_dly_file(path):
     """Read a normals daily file"""
     spec1 = {"id": [(0, 11), str], "month": [(12, 14), float]}
-    spec2 = {"day" + str(i): [(11 + i * 7, 16 + i * 7), float] for i in range(1, 32)}
+    spec2 = {i: [(11 + i * 7, 16 + i * 7), float] for i in range(1, 32)}
     spec = {**spec1, **spec2}
     names = spec.keys()
     values = spec.values()
@@ -100,3 +102,13 @@ def norm_read_dly_file(path):
         print("Exception: ", e, " at ", path)
     return df
 
+
+def remove_invalid_dates(df):
+    bad = (
+        ((df["month"] == 2) & (df["day"] > 29))
+        | ((df["month"] == 4) & (df["day"] == 31))
+        | ((df["month"] == 6) & (df["day"] == 31))
+        | ((df["month"] == 9) & (df["day"] == 31))
+        | ((df["month"] == 1) & (df["day"] == 31))
+    )
+    return df[~bad]
