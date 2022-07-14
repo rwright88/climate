@@ -110,7 +110,7 @@ def ghcn_clean_values(x, element):
 
 
 def ghcn_calc_summary(df, freq, na_threshold=0.1):
-    """Get monthly or yearly averages from GHCN cleaned data"""
+    """Get monthly or yearly summary statistics from GHCN cleaned data"""
     if freq == "yearly":
         by = ["id", "year"]
         min_count = np.ceil(365 * (1 - na_threshold))
@@ -121,13 +121,14 @@ def ghcn_calc_summary(df, freq, na_threshold=0.1):
     else:
         raise ValueError("freq must be yearly or monthly")
     df["year"] = df["date"].dt.year
-    agg = {
-        "prcp": ["sum", "count"],
-        "snow": ["sum", "count"],
-        "snwd": ["mean", "count"],
-        "tmax": ["mean", "count"],
-        "tmin": ["mean", "count"],
-    }
+    agg = {}
+    cols = df.columns.tolist()
+    for stat in ["prcp", "snow"]:
+        if stat in cols:
+            agg[stat] = ["sum", "count"]
+    for stat in ["snwd", "tmax", "tmin"]:
+        if stat in cols:
+            agg[stat] = ["mean", "count"]
     out = df.groupby(by).agg(agg).reset_index()
     out.columns = by + [x + "_" + y for x in agg.keys() for y in agg[x]]
     for k, v in agg.items():
