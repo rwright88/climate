@@ -2,9 +2,6 @@
 
 import os
 
-import numpy as np
-import pandas as pd
-
 import climate
 
 OUT_DIR = "out"
